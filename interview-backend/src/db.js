@@ -5,14 +5,15 @@ dotenv.config();
 
 const { Pool } = pg;
 
+// ✅ Use DATABASE_URL from .env / Render
 export const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "postgres", // apna DB name yaha change kar sakte ho
-  password: "Rudra@001",
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false, // required for Render PostgreSQL
+  },
 });
 
+// ✅ Query function (same as before)
 export async function query(text, params) {
   const client = await pool.connect();
   try {
@@ -23,6 +24,7 @@ export async function query(text, params) {
   }
 }
 
+// ✅ Initialize DB tables
 export async function initDB() {
   try {
     await query(`
