@@ -67,7 +67,7 @@ function MessageBubble({ msg, onLike, onDislike }: { msg: Message; onLike: () =>
         </div>
       ) : (
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/50 to-blue-500/50 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">
-          PS {/* Updated to your initials Paras! */}
+          PS
         </div>
       )}
 
@@ -126,7 +126,7 @@ export default function Chatbot() {
   useEffect(() => {
     const initConversation = async () => {
       try {
-        const res = await fetch("http://localhost:3001/api/chatbot/conversations", {
+        const res = await fetch("https://prepify-ai-wuil.onrender.com/api/chatbot/conversations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ title: "New Interview Prep Session" }),
@@ -153,13 +153,11 @@ export default function Chatbot() {
     const messageText = text || input.trim();
     if (!messageText) return;
 
-    // Make sure we have an ID before sending
     if (!conversationId) {
       alert("Still connecting to database, please wait a second...");
       return;
     }
 
-    // Add user message instantly
     const userMsg: Message = {
       id: Date.now(),
       role: "user",
@@ -171,13 +169,11 @@ export default function Chatbot() {
     setInput("");
     setIsTyping(true);
 
-    // Create a blank AI message placeholder that we will update as the stream comes in
     const aiMsgId = Date.now() + 1;
     setMessages((prev) => [...prev, { id: aiMsgId, role: "ai", content: "", timestamp: new Date() }]);
 
     try {
-      // 2. Hit the correct endpoint with the correct payload
-      const res = await fetch(`http://localhost:3001/api/chatbot/conversations/${conversationId}/messages`, {
+      const res = await fetch(`https://prepify-ai-wuil.onrender.com/api/chatbot/conversations/${conversationId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: messageText }), 
@@ -185,20 +181,19 @@ export default function Chatbot() {
 
       if (!res.ok) throw new Error("Network error from backend");
 
-      // 3. Read the Server-Sent Events (SSE) Stream
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let aiFullResponse = "";
 
       if (reader) {
-        setIsTyping(false); // Stop the bouncing dots once data starts flowing
+        setIsTyping(false); 
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n\n"); // SSE sends double newlines
+          const lines = chunk.split("\n\n");
 
           for (const line of lines) {
             if (line.startsWith("data: ")) {
@@ -206,11 +201,10 @@ export default function Chatbot() {
               try {
                 const data = JSON.parse(dataStr);
                 
-                if (data.done) break; // Finished streaming
+                if (data.done) break;
 
                 if (data.content) {
                   aiFullResponse += data.content;
-                  // Update the specific blank message we created earlier
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === aiMsgId ? { ...msg, content: aiFullResponse } : msg
@@ -218,7 +212,7 @@ export default function Chatbot() {
                   );
                 }
               } catch (e) {
-                // Ignore incomplete JSON chunks, they will complete on the next cycle
+                // Ignore incomplete JSON chunks
               }
             }
           }
@@ -228,7 +222,7 @@ export default function Chatbot() {
       console.error(error);
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === aiMsgId ? { ...msg, content: "❌ Error connecting to Grok AI. Is your backend running?" } : msg
+          msg.id === aiMsgId ? { ...msg, content: "❌ Error connecting to AI. Is your backend running?" } : msg
         )
       );
     } finally {
@@ -253,7 +247,6 @@ export default function Chatbot() {
 
   return (
     <div className="flex flex-col h-full bg-black page-enter">
-      {/* Header */}
       <div className="px-4 md:px-6 py-4 border-b border-white/5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
@@ -268,10 +261,7 @@ export default function Chatbot() {
           </div>
         </div>
         <button
-          onClick={() => {
-            setMessages(initialMessages);
-            // Optionally: you could trigger creating a NEW conversation ID here too
-          }}
+          onClick={() => setMessages(initialMessages)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-muted-foreground hover:text-white transition-all hover:scale-105"
         >
           <RotateCcw className="w-3 h-3" />
@@ -279,7 +269,6 @@ export default function Chatbot() {
         </button>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
         {messages.map((msg) => (
           <MessageBubble
@@ -293,7 +282,6 @@ export default function Chatbot() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested prompts */}
       {messages.length <= 1 && (
         <div className="px-4 md:px-6 py-3 flex flex-wrap gap-2">
           {suggestedPrompts.map((prompt, i) => (
@@ -308,7 +296,6 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* Input area */}
       <div className="px-4 md:px-6 py-4 border-t border-white/5 flex-shrink-0">
         <div className="relative flex items-end gap-3 rounded-2xl border border-white/10 focus-within:border-purple-500/40 transition-all p-2 pr-3">
           <textarea

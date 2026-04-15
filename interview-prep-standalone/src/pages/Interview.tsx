@@ -203,7 +203,7 @@ export default function Interview() {
     setAiFeedback("");
 
     try {
-      const res = await fetch("http://localhost:3001/api/interview/analyze-answer", {
+      const res = await fetch("https://prepify-ai-wuil.onrender.com/api/interview/analyze-answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
